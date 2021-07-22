@@ -65,10 +65,10 @@ You can find more examples here: [esc_pos_utils](https://github.com/andrey-ushak
 ```dart
 PrinterBluetoothManager printerManager = PrinterBluetoothManager();
 
-printerManager.scanResults.listen((printers) async {
+printerManager.discoverResults.listen((printers) async {
   // store found printers
 });
-printerManager.startScan(Duration(seconds: 4));
+printerManager.startDiscovery(Duration(seconds: 4));
 
 // ...
 

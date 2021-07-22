@@ -85,15 +85,12 @@ class PrinterBluetoothManager {
     if (_selectedPrinter == null) {
       return Future<PosPrintResult>.value(PosPrintResult.printerNotSelected);
     } else if (_isDiscovering.value) {
-      return Future<PosPrintResult>.value(PosPrintResult.scanInProgress);
+      return Future<PosPrintResult>.value(PosPrintResult.discoveryInProgress);
     } else if (_isPrinting) {
       return Future<PosPrintResult>.value(PosPrintResult.printInProgress);
     }
 
     _isPrinting = true;
-
-    // // We have to rescan before connecting, otherwise we can connect only once
-    // await _bluetoothManager.startDiscovery();
 
     // Connect
     // try {
