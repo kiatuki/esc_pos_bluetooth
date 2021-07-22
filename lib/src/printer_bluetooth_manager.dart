@@ -38,7 +38,7 @@ class PrinterBluetoothManager {
 
   final BehaviorSubject<List<BluetoothDevice>> _discoverResults =
       BehaviorSubject.seeded([]);
-  Stream<List<BluetoothDevice>> get scanResults => _discoverResults.stream;
+  Stream<List<BluetoothDevice>> get discoverResults => _discoverResults.stream;
 
   Future _runDelayed(int seconds) {
     return Future<dynamic>.delayed(Duration(seconds: seconds));

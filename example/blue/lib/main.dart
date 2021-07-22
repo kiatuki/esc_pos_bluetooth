@@ -44,7 +44,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
 
-    printerManager.scanResults.listen((devices) async {
+    printerManager.discoverResults.listen((devices) async {
       // print('UI: Devices found ${devices.length}');
       setState(() {
         _devices = devices;
@@ -52,14 +52,14 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void _startScanDevices() {
+  void _startDiscoverDevices() {
     setState(() {
       _devices = [];
     });
     printerManager.startDiscovery();
   }
 
-  void _stopScanDevices() {
+  void _stopDiscoverDevices() {
     printerManager.stopDiscovery();
   }
 
@@ -345,13 +345,13 @@ class _MyHomePageState extends State<MyHomePage> {
           if (snapshot.data) {
             return FloatingActionButton(
               child: Icon(Icons.stop),
-              onPressed: _stopScanDevices,
+              onPressed: _stopDiscoverDevices,
               backgroundColor: Colors.red,
             );
           } else {
             return FloatingActionButton(
               child: Icon(Icons.search),
-              onPressed: _startScanDevices,
+              onPressed: _startDiscoverDevices,
             );
           }
         },
