@@ -7,10 +7,11 @@
  */
 
 import 'dart:async';
-import 'dart:io';
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:esc_pos_utils/esc_pos_utils.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:flutter_bluetooth_basic/flutter_bluetooth_basic.dart';
+import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import './enums.dart';
 
 /// Bluetooth printer
@@ -20,54 +21,56 @@ class PrinterBluetooth {
 
   String get name => _device.name;
   String get address => _device.address;
-  int get type => _device.type;
+  BluetoothDeviceType get type => _device.type;
 }
 
 /// Printer Bluetooth Manager
 class PrinterBluetoothManager {
-  final BluetoothManager _bluetoothManager = BluetoothManager.instance;
+  final FlutterBluetoothSerial _bluetoothManager =
+      FlutterBluetoothSerial.instance;
   bool _isPrinting = false;
-  bool _isConnected = false;
-  StreamSubscription _scanResultsSubscription;
-  StreamSubscription _isScanningSubscription;
-  PrinterBluetooth _selectedPrinter;
+  // bool _isConnected = false;
+  StreamSubscription<BluetoothDiscoveryResult> _discoveringSubscription;
+  BluetoothDevice _selectedPrinter;
 
-  final BehaviorSubject<bool> _isScanning = BehaviorSubject.seeded(false);
-  Stream<bool> get isScanningStream => _isScanning.stream;
+  final BehaviorSubject<bool> _isDiscovering = BehaviorSubject.seeded(false);
+  Stream<bool> get isDiscoveringStream => _isDiscovering.stream;
 
-  final BehaviorSubject<List<PrinterBluetooth>> _scanResults =
+  final BehaviorSubject<List<BluetoothDevice>> _discoverResults =
       BehaviorSubject.seeded([]);
-  Stream<List<PrinterBluetooth>> get scanResults => _scanResults.stream;
+  Stream<List<BluetoothDevice>> get scanResults => _discoverResults.stream;
 
   Future _runDelayed(int seconds) {
     return Future<dynamic>.delayed(Duration(seconds: seconds));
   }
 
-  void startScan(Duration timeout) async {
-    _scanResults.add(<PrinterBluetooth>[]);
+  void startDiscovery() async {
+    final List<BluetoothDevice> _results = [];
+    _discoverResults.add([]);
 
-    _bluetoothManager.startScan(timeout: timeout);
-
-    _scanResultsSubscription = _bluetoothManager.scanResults.listen((devices) {
-      _scanResults.add(devices.map((d) => PrinterBluetooth(d)).toList());
-    });
-
-    _isScanningSubscription =
-        _bluetoothManager.isScanning.listen((isScanningCurrent) async {
-      // If isScanning value changed (scan just stopped)
-      if (_isScanning.value && !isScanningCurrent) {
-        _scanResultsSubscription.cancel();
-        _isScanningSubscription.cancel();
+    _isDiscovering.add(true);
+    _discoveringSubscription =
+        _bluetoothManager.startDiscovery().listen((event) {
+      if (!_results.contains(event.device)) {
+        _results.add(event.device);
       }
-      _isScanning.add(isScanningCurrent);
-    });
+      _discoverResults.add(_results.map((_) => _).toList());
+    })
+          ..onDone(() {
+            _isDiscovering.add(false);
+          });
   }
 
-  void stopScan() async {
-    await _bluetoothManager.stopScan();
+  void stopDiscovery() async {
+    await _discoveringSubscription?.cancel();
+    _isDiscovering?.add(false);
   }
 
-  void selectPrinter(PrinterBluetooth printer) {
+  Future<List<BluetoothDevice>> getPairedDevices() async {
+    return await _bluetoothManager.getBondedDevices();
+  }
+
+  void selectPrinter(BluetoothDevice printer) {
     _selectedPrinter = printer;
   }
 
@@ -81,7 +84,7 @@ class PrinterBluetoothManager {
     const int timeout = 5;
     if (_selectedPrinter == null) {
       return Future<PosPrintResult>.value(PosPrintResult.printerNotSelected);
-    } else if (_isScanning.value) {
+    } else if (_isDiscovering.value) {
       return Future<PosPrintResult>.value(PosPrintResult.scanInProgress);
     } else if (_isPrinting) {
       return Future<PosPrintResult>.value(PosPrintResult.printInProgress);
@@ -89,47 +92,25 @@ class PrinterBluetoothManager {
 
     _isPrinting = true;
 
-    // We have to rescan before connecting, otherwise we can connect only once
-    await _bluetoothManager.startScan(timeout: Duration(seconds: 1));
-    await _bluetoothManager.stopScan();
+    // // We have to rescan before connecting, otherwise we can connect only once
+    // await _bluetoothManager.startDiscovery();
 
     // Connect
-    await _bluetoothManager.connect(_selectedPrinter._device);
+    // try {
+    final BluetoothConnection connection =
+        await BluetoothConnection.toAddress(_selectedPrinter.address);
 
-    // Subscribe to the events
-    _bluetoothManager.state.listen((state) async {
-      switch (state) {
-        case BluetoothManager.CONNECTED:
-          // To avoid double call
-          if (!_isConnected) {
-            final len = bytes.length;
-            List<List<int>> chunks = [];
-            for (var i = 0; i < len; i += chunkSizeBytes) {
-              var end = (i + chunkSizeBytes < len) ? i + chunkSizeBytes : len;
-              chunks.add(bytes.sublist(i, end));
-            }
+    connection.input.listen((Uint8List data) {
+      print('Data incoming: ${ascii.decode(data)}');
 
-            for (var i = 0; i < chunks.length; i += 1) {
-              await _bluetoothManager.writeData(chunks[i]);
-              sleep(Duration(milliseconds: queueSleepTimeMs));
-            }
-
-            completer.complete(PosPrintResult.success);
-          }
-          // TODO sending disconnect signal should be event-based
-          _runDelayed(3).then((dynamic v) async {
-            await _bluetoothManager.disconnect();
-            _isPrinting = false;
-          });
-          _isConnected = true;
-          break;
-        case BluetoothManager.DISCONNECTED:
-          _isConnected = false;
-          break;
-        default:
-          break;
+      if (ascii.decode(data).contains('!')) {
+        connection.finish(); // Closing connection
+        print('Disconnecting by local host');
       }
+    }).onDone(() {
+      print('Disconnected by remote request');
     });
+    connection.output.add(Uint8List.fromList(bytes));
 
     // Printing timeout
     _runDelayed(timeout).then((dynamic v) async {

@@ -9,6 +9,7 @@ import 'package:esc_pos_utils/esc_pos_utils.dart';
 import 'package:esc_pos_bluetooth/esc_pos_bluetooth.dart';
 import 'package:flutter/material.dart' hide Image;
 import 'package:oktoast/oktoast.dart';
+import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 
 void main() => runApp(MyApp());
 
@@ -37,7 +38,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   PrinterBluetoothManager printerManager = PrinterBluetoothManager();
-  List<PrinterBluetooth> _devices = [];
+  List<BluetoothDevice> _devices = [];
 
   @override
   void initState() {
@@ -55,11 +56,11 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       _devices = [];
     });
-    printerManager.startScan(Duration(seconds: 4));
+    printerManager.startDiscovery();
   }
 
   void _stopScanDevices() {
-    printerManager.stopScan();
+    printerManager.stopDiscovery();
   }
 
   Future<Ticket> demoReceipt(PaperSize paper) async {
@@ -277,7 +278,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return ticket;
   }
 
-  void _testPrint(PrinterBluetooth printer) async {
+  void _testPrint(BluetoothDevice printer) async {
     printerManager.selectPrinter(printer);
 
     // TODO Don't forget to choose printer's paper
@@ -338,7 +339,7 @@ class _MyHomePageState extends State<MyHomePage> {
             );
           }),
       floatingActionButton: StreamBuilder<bool>(
-        stream: printerManager.isScanningStream,
+        stream: printerManager.isDiscoveringStream,
         initialData: false,
         builder: (c, snapshot) {
           if (snapshot.data) {
