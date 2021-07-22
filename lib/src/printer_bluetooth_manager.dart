@@ -74,11 +74,7 @@ class PrinterBluetoothManager {
     _selectedPrinter = printer;
   }
 
-  Future<PosPrintResult> writeBytes(
-    List<int> bytes, {
-    int chunkSizeBytes = 20,
-    int queueSleepTimeMs = 20,
-  }) async {
+  Future<PosPrintResult> writeBytes(List<int> bytes) async {
     final Completer<PosPrintResult> completer = Completer();
 
     const int timeout = 5;
@@ -120,18 +116,10 @@ class PrinterBluetoothManager {
     return completer.future;
   }
 
-  Future<PosPrintResult> printTicket(
-    Ticket ticket, {
-    int chunkSizeBytes = 20,
-    int queueSleepTimeMs = 20,
-  }) async {
+  Future<PosPrintResult> printTicket(Ticket ticket) async {
     if (ticket == null || ticket.bytes.isEmpty) {
       return Future<PosPrintResult>.value(PosPrintResult.ticketEmpty);
     }
-    return writeBytes(
-      ticket.bytes,
-      chunkSizeBytes: chunkSizeBytes,
-      queueSleepTimeMs: queueSleepTimeMs,
-    );
+    return writeBytes(ticket.bytes);
   }
 }
