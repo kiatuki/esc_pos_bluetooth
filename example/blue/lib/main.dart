@@ -1,8 +1,5 @@
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:intl/intl.dart';
-import 'package:qr_flutter/qr_flutter.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:flutter/services.dart';
 import 'package:image/image.dart';
 import 'package:esc_pos_utils/esc_pos_utils.dart';
@@ -22,14 +19,14 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           primarySwatch: Colors.blue,
         ),
-        home: MyHomePage(title: 'Bluetooth demo'),
+        home: const MyHomePage(title: 'Bluetooth demo'),
       ),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
+  const MyHomePage({Key key, this.title}) : super(key: key);
   final String title;
 
   @override
@@ -59,7 +56,7 @@ class _MyHomePageState extends State<MyHomePage> {
     _pairedDevices = await printerManager.getPairedDevices();
   }
 
-  void _startDiscoverDevices() async {
+  Future<void> _startDiscoverDevices() async {
     _discoveredDevices = [];
     setState(() {});
     printerManager.startDiscovery();
@@ -73,66 +70,66 @@ class _MyHomePageState extends State<MyHomePage> {
     final Ticket ticket = Ticket(paper);
 
     // Print image
-    final ByteData data = await rootBundle.load('assets/rabbit_black.jpg');
-    final Uint8List bytes = data.buffer.asUint8List();
-    final Image image = decodeImage(bytes);
+    // final ByteData data = await rootBundle.load('assets/rabbit_black.jpg');
+    // final Uint8List bytes = data.buffer.asUint8List();
+    // final Image image = decodeImage(bytes);
     // ticket.image(image);
 
     ticket.text('GROCERYLY',
-        styles: PosStyles(
+        styles: const PosStyles(
           align: PosAlign.center,
           height: PosTextSize.size2,
           width: PosTextSize.size2,
         ),
         linesAfter: 1);
 
-    ticket.text('889  Watson Lane', styles: PosStyles(align: PosAlign.center));
-    ticket.text('New Braunfels, TX', styles: PosStyles(align: PosAlign.center));
-    ticket.text('Tel: 830-221-1234', styles: PosStyles(align: PosAlign.center));
+    ticket.text('889  Watson Lane', styles: const PosStyles(align: PosAlign.center));
+    ticket.text('New Braunfels, TX', styles: const PosStyles(align: PosAlign.center));
+    ticket.text('Tel: 830-221-1234', styles: const PosStyles(align: PosAlign.center));
     ticket.text('Web: www.example.com',
-        styles: PosStyles(align: PosAlign.center), linesAfter: 1);
+        styles: const PosStyles(align: PosAlign.center), linesAfter: 1);
 
     ticket.hr();
     ticket.row([
       PosColumn(text: 'Qty', width: 1),
       PosColumn(text: 'Item', width: 7),
       PosColumn(
-          text: 'Price', width: 2, styles: PosStyles(align: PosAlign.right)),
+          text: 'Price', width: 2, styles: const PosStyles(align: PosAlign.right)),
       PosColumn(
-          text: 'Total', width: 2, styles: PosStyles(align: PosAlign.right)),
+          text: 'Total', width: 2, styles: const PosStyles(align: PosAlign.right)),
     ]);
 
     ticket.row([
       PosColumn(text: '2', width: 1),
       PosColumn(text: 'ONION RINGS', width: 7),
       PosColumn(
-          text: '0.99', width: 2, styles: PosStyles(align: PosAlign.right)),
+          text: '0.99', width: 2, styles: const PosStyles(align: PosAlign.right)),
       PosColumn(
-          text: '1.98', width: 2, styles: PosStyles(align: PosAlign.right)),
+          text: '1.98', width: 2, styles: const PosStyles(align: PosAlign.right)),
     ]);
     ticket.row([
       PosColumn(text: '1', width: 1),
       PosColumn(text: 'PIZZA', width: 7),
       PosColumn(
-          text: '3.45', width: 2, styles: PosStyles(align: PosAlign.right)),
+          text: '3.45', width: 2, styles: const PosStyles(align: PosAlign.right)),
       PosColumn(
-          text: '3.45', width: 2, styles: PosStyles(align: PosAlign.right)),
+          text: '3.45', width: 2, styles: const PosStyles(align: PosAlign.right)),
     ]);
     ticket.row([
       PosColumn(text: '1', width: 1),
       PosColumn(text: 'SPRING ROLLS', width: 7),
       PosColumn(
-          text: '2.99', width: 2, styles: PosStyles(align: PosAlign.right)),
+          text: '2.99', width: 2, styles: const PosStyles(align: PosAlign.right)),
       PosColumn(
-          text: '2.99', width: 2, styles: PosStyles(align: PosAlign.right)),
+          text: '2.99', width: 2, styles: const PosStyles(align: PosAlign.right)),
     ]);
     ticket.row([
       PosColumn(text: '3', width: 1),
       PosColumn(text: 'CRUNCHY STICKS', width: 7),
       PosColumn(
-          text: '0.85', width: 2, styles: PosStyles(align: PosAlign.right)),
+          text: '0.85', width: 2, styles: const PosStyles(align: PosAlign.right)),
       PosColumn(
-          text: '2.55', width: 2, styles: PosStyles(align: PosAlign.right)),
+          text: '2.55', width: 2, styles: const PosStyles(align: PosAlign.right)),
     ]);
     ticket.hr();
 
@@ -140,14 +137,14 @@ class _MyHomePageState extends State<MyHomePage> {
       PosColumn(
           text: 'TOTAL',
           width: 6,
-          styles: PosStyles(
+          styles: const PosStyles(
             height: PosTextSize.size2,
             width: PosTextSize.size2,
           )),
       PosColumn(
           text: '\$10.97',
           width: 6,
-          styles: PosStyles(
+          styles: const PosStyles(
             align: PosAlign.right,
             height: PosTextSize.size2,
             width: PosTextSize.size2,
@@ -160,32 +157,32 @@ class _MyHomePageState extends State<MyHomePage> {
       PosColumn(
           text: 'Cash',
           width: 7,
-          styles: PosStyles(align: PosAlign.right, width: PosTextSize.size2)),
+          styles: const PosStyles(align: PosAlign.right, width: PosTextSize.size2)),
       PosColumn(
           text: '\$15.00',
           width: 5,
-          styles: PosStyles(align: PosAlign.right, width: PosTextSize.size2)),
+          styles: const PosStyles(align: PosAlign.right, width: PosTextSize.size2)),
     ]);
     ticket.row([
       PosColumn(
           text: 'Change',
           width: 7,
-          styles: PosStyles(align: PosAlign.right, width: PosTextSize.size2)),
+          styles: const PosStyles(align: PosAlign.right, width: PosTextSize.size2)),
       PosColumn(
           text: '\$4.03',
           width: 5,
-          styles: PosStyles(align: PosAlign.right, width: PosTextSize.size2)),
+          styles: const PosStyles(align: PosAlign.right, width: PosTextSize.size2)),
     ]);
 
     ticket.feed(2);
     ticket.text('Thank you!',
-        styles: PosStyles(align: PosAlign.center, bold: true));
+        styles: const PosStyles(align: PosAlign.center, bold: true));
 
     final now = DateTime.now();
     final formatter = DateFormat('MM/dd/yyyy H:m');
     final String timestamp = formatter.format(now);
     ticket.text(timestamp,
-        styles: PosStyles(align: PosAlign.center), linesAfter: 2);
+        styles: const PosStyles(align: PosAlign.center), linesAfter: 2);
 
     // Print QR Code from image
     // try {
@@ -221,39 +218,39 @@ class _MyHomePageState extends State<MyHomePage> {
     ticket.text(
         'Regular: aA bB cC dD eE fF gG hH iI jJ kK lL mM nN oO pP qQ rR sS tT uU vV wW xX yY zZ');
     ticket.text('Special 1: àÀ èÈ éÉ ûÛ üÜ çÇ ôÔ',
-        styles: PosStyles(codeTable: PosCodeTable.westEur));
+        styles: const PosStyles(codeTable: PosCodeTable.westEur));
     ticket.text('Special 2: blåbærgrød',
-        styles: PosStyles(codeTable: PosCodeTable.westEur));
+        styles: const PosStyles(codeTable: PosCodeTable.westEur));
 
-    ticket.text('Bold text', styles: PosStyles(bold: true));
-    ticket.text('Reverse text', styles: PosStyles(reverse: true));
+    ticket.text('Bold text', styles: const PosStyles(bold: true));
+    ticket.text('Reverse text', styles: const PosStyles(reverse: true));
     ticket.text('Underlined text',
-        styles: PosStyles(underline: true), linesAfter: 1);
-    ticket.text('Align left', styles: PosStyles(align: PosAlign.left));
-    ticket.text('Align center', styles: PosStyles(align: PosAlign.center));
+        styles: const PosStyles(underline: true), linesAfter: 1);
+    ticket.text('Align left', styles: const PosStyles(align: PosAlign.left));
+    ticket.text('Align center', styles: const PosStyles(align: PosAlign.center));
     ticket.text('Align right',
-        styles: PosStyles(align: PosAlign.right), linesAfter: 1);
+        styles: const PosStyles(align: PosAlign.right), linesAfter: 1);
 
     ticket.row([
       PosColumn(
         text: 'col3',
         width: 3,
-        styles: PosStyles(align: PosAlign.center, underline: true),
+        styles: const PosStyles(align: PosAlign.center, underline: true),
       ),
       PosColumn(
         text: 'col6',
         width: 6,
-        styles: PosStyles(align: PosAlign.center, underline: true),
+        styles: const PosStyles(align: PosAlign.center, underline: true),
       ),
       PosColumn(
         text: 'col3',
         width: 3,
-        styles: PosStyles(align: PosAlign.center, underline: true),
+        styles: const PosStyles(align: PosAlign.center, underline: true),
       ),
     ]);
 
     ticket.text('Text size 200%',
-        styles: PosStyles(
+        styles: const PosStyles(
           height: PosTextSize.size2,
           width: PosTextSize.size2,
         ));
@@ -274,7 +271,7 @@ class _MyHomePageState extends State<MyHomePage> {
     // Print mixed (chinese + latin) text. Only for printers supporting Kanji mode
     // ticket.text(
     //   'hello ! 中文字 # world @ éphémère &',
-    //   styles: PosStyles(codeTable: PosCodeTable.westEur),
+    //   styles: const PosStyles(codeTable: PosCodeTable.westEur),
     //   containsChinese: true,
     // );
 
@@ -284,7 +281,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return ticket;
   }
 
-  void _testPrint(BluetoothDevice printer) async {
+  Future<void> _testPrint(BluetoothDevice printer) async {
     printerManager.selectPrinter(printer);
 
     // TODO Don't forget to choose printer's paper
@@ -304,7 +301,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget _sectionHeader(String text) => Container(
         height: 30,
         width: MediaQuery.of(context).size.width,
-        padding: EdgeInsets.only(left: 10),
+        padding: const EdgeInsets.only(left: 10),
         alignment: Alignment.centerLeft,
         child: Text(
           text,
@@ -320,12 +317,12 @@ class _MyHomePageState extends State<MyHomePage> {
         onTap: () => _testPrint(device),
         child: Container(
           height: 60,
-          padding: EdgeInsets.only(left: 10),
+          padding: const EdgeInsets.only(left: 10),
           alignment: Alignment.centerLeft,
           child: Row(
             children: <Widget>[
-              Icon(Icons.print),
-              SizedBox(width: 10),
+              const Icon(Icons.print),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -366,7 +363,7 @@ class _MyHomePageState extends State<MyHomePage> {
       body: ListView.separated(
         itemCount: listViewItems.length,
         itemBuilder: (_, i) => listViewItems[i],
-        separatorBuilder: (_, i) => Divider(),
+        separatorBuilder: (_, i) => const Divider(),
       ),
       floatingActionButton: StreamBuilder<bool>(
         stream: printerManager.isDiscoveringStream,
@@ -374,13 +371,13 @@ class _MyHomePageState extends State<MyHomePage> {
         builder: (c, snapshot) {
           if (snapshot.data) {
             return FloatingActionButton(
-              child: Icon(Icons.stop),
+              child: const Icon(Icons.stop),
               onPressed: _stopDiscoverDevices,
               backgroundColor: Colors.red,
             );
           } else {
             return FloatingActionButton(
-              child: Icon(Icons.search),
+              child: const Icon(Icons.search),
               onPressed: _startDiscoverDevices,
             );
           }

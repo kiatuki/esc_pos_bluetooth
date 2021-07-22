@@ -44,7 +44,7 @@ class PrinterBluetoothManager {
     return Future<dynamic>.delayed(Duration(seconds: seconds));
   }
 
-  void startDiscovery() async {
+  Future<void> startDiscovery() async {
     final List<BluetoothDevice> _results = [];
     _discoverResults.add([]);
 
@@ -61,7 +61,7 @@ class PrinterBluetoothManager {
           });
   }
 
-  void stopDiscovery() async {
+  Future<void> stopDiscovery() async {
     await _discoveringSubscription?.cancel();
     _isDiscovering?.add(false);
   }
