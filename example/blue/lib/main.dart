@@ -38,7 +38,8 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   PrinterBluetoothManager printerManager = PrinterBluetoothManager();
-  List<BluetoothDevice> _devices = [];
+  List<BluetoothDevice> _pairedDevices = [];
+  List<BluetoothDevice> _discoveredDevices = [];
 
   @override
   void initState() {
@@ -47,15 +48,20 @@ class _MyHomePageState extends State<MyHomePage> {
     printerManager.discoverResults.listen((devices) async {
       // print('UI: Devices found ${devices.length}');
       setState(() {
-        _devices = devices;
+        _discoveredDevices = devices;
       });
     });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadPairedDevices());
   }
 
-  void _startDiscoverDevices() {
-    setState(() {
-      _devices = [];
-    });
+  Future<void> _loadPairedDevices() async {
+    _pairedDevices = await printerManager.getPairedDevices();
+  }
+
+  void _startDiscoverDevices() async {
+    _discoveredDevices = [];
+    setState(() {});
     printerManager.startDiscovery();
   }
 
@@ -295,49 +301,73 @@ class _MyHomePageState extends State<MyHomePage> {
     showToast(res.msg);
   }
 
+  Widget _sectionHeader(String text) => Container(
+        height: 30,
+        width: MediaQuery.of(context).size.width,
+        padding: EdgeInsets.only(left: 10),
+        alignment: Alignment.centerLeft,
+        child: Text(
+          text,
+          softWrap: false,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+
+  Widget _bluetoothDeviceItem(BluetoothDevice device) => InkWell(
+        onTap: () => _testPrint(device),
+        child: Container(
+          height: 60,
+          padding: EdgeInsets.only(left: 10),
+          alignment: Alignment.centerLeft,
+          child: Row(
+            children: <Widget>[
+              Icon(Icons.print),
+              SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Text(device.name ?? ''),
+                    Text(device.address),
+                    Text(
+                      'Click to print a test receipt',
+                      style: TextStyle(color: Colors.grey[700]),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
+    final List<Widget> listViewItems = [];
+    if (_pairedDevices.isNotEmpty) {
+      listViewItems
+        ..add(_sectionHeader('Paired Devices'))
+        ..addAll(_pairedDevices.map<Widget>((e) => _bluetoothDeviceItem(e)));
+    }
+    if (_discoveredDevices.isNotEmpty) {
+      listViewItems
+        ..add(_sectionHeader('Discovered Devices'))
+        ..addAll(
+            _discoveredDevices.map<Widget>((e) => _bluetoothDeviceItem(e)));
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: ListView.builder(
-          itemCount: _devices.length,
-          itemBuilder: (BuildContext context, int index) {
-            return InkWell(
-              onTap: () => _testPrint(_devices[index]),
-              child: Column(
-                children: <Widget>[
-                  Container(
-                    height: 60,
-                    padding: EdgeInsets.only(left: 10),
-                    alignment: Alignment.centerLeft,
-                    child: Row(
-                      children: <Widget>[
-                        Icon(Icons.print),
-                        SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: <Widget>[
-                              Text(_devices[index].name ?? ''),
-                              Text(_devices[index].address),
-                              Text(
-                                'Click to print a test receipt',
-                                style: TextStyle(color: Colors.grey[700]),
-                              ),
-                            ],
-                          ),
-                        )
-                      ],
-                    ),
-                  ),
-                  Divider(),
-                ],
-              ),
-            );
-          }),
+      body: ListView.separated(
+        itemCount: listViewItems.length,
+        itemBuilder: (_, i) => listViewItems[i],
+        separatorBuilder: (_, i) => Divider(),
+      ),
       floatingActionButton: StreamBuilder<bool>(
         stream: printerManager.isDiscoveringStream,
         initialData: false,
