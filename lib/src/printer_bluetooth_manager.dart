@@ -40,11 +40,7 @@ class PrinterBluetoothManager {
       BehaviorSubject.seeded([]);
   Stream<List<BluetoothDevice>> get discoverResults => _discoverResults.stream;
 
-  Future _runDelayed(int seconds) {
-    return Future<dynamic>.delayed(Duration(seconds: seconds));
-  }
-
-  Future<void> startDiscovery() async {
+  Future<void> startDiscovery({Duration timeout}) async {
     final List<BluetoothDevice> _results = [];
     _discoverResults.add([]);
 
@@ -59,6 +55,12 @@ class PrinterBluetoothManager {
           ..onDone(() {
             _isDiscovering.add(false);
           });
+
+    if (timeout != null) {
+      Future.delayed(timeout, () {
+        stopDiscovery();
+      });
+    }
   }
 
   Future<void> stopDiscovery() async {
@@ -74,10 +76,12 @@ class PrinterBluetoothManager {
     _selectedPrinter = printer;
   }
 
-  Future<PosPrintResult> writeBytes(List<int> bytes) async {
+  Future<PosPrintResult> writeBytes(
+    List<int> bytes, {
+    Duration timeout = const Duration(seconds: 5),
+  }) async {
     final Completer<PosPrintResult> completer = Completer();
 
-    const int timeout = 5;
     if (_selectedPrinter == null) {
       return Future<PosPrintResult>.value(PosPrintResult.printerNotSelected);
     } else if (_isDiscovering.value) {
@@ -106,7 +110,7 @@ class PrinterBluetoothManager {
     connection.output.add(Uint8List.fromList(bytes));
 
     // Printing timeout
-    _runDelayed(timeout).then((dynamic v) async {
+    Future.delayed(timeout, () {
       if (_isPrinting) {
         _isPrinting = false;
         completer.complete(PosPrintResult.timeout);
