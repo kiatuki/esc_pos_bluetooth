@@ -31,7 +31,9 @@ class PrinterBluetoothManager {
   bool _isPrinting = false;
   // bool _isConnected = false;
   StreamSubscription<BluetoothDiscoveryResult> _discoveringSubscription;
+  
   BluetoothDevice _selectedPrinter;
+  BluetoothDevice get selectedPrinter => _selectedPrinter;
 
   final BehaviorSubject<bool> _isDiscovering = BehaviorSubject.seeded(false);
   Stream<bool> get isDiscoveringStream => _isDiscovering.stream;
