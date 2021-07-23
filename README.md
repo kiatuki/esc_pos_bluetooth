@@ -68,7 +68,7 @@ PrinterBluetoothManager printerManager = PrinterBluetoothManager();
 printerManager.discoverResults.listen((printers) async {
   // store found printers
 });
-printerManager.startDiscovery(Duration(seconds: 4));
+printerManager.startDiscovery(timeout: Duration(seconds: 4));
 
 // ...
 
