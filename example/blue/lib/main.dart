@@ -378,7 +378,10 @@ class _MyHomePageState extends State<MyHomePage> {
           } else {
             return FloatingActionButton(
               child: const Icon(Icons.search),
-              onPressed: _startDiscoverDevices,
+              onPressed: () {
+                _loadPairedDevices();
+                _startDiscoverDevices();
+              },
             );
           }
         },
