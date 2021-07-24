@@ -28,10 +28,10 @@ class PrinterBluetooth {
 class PrinterBluetoothManager {
   final FlutterBluetoothSerial _bluetoothManager =
       FlutterBluetoothSerial.instance;
-  bool _isPrinting = false;
+  bool _isSendingData = false;
   // bool _isConnected = false;
   StreamSubscription<BluetoothDiscoveryResult> _discoveringSubscription;
-  
+
   BluetoothDevice _selectedPrinter;
   BluetoothDevice get selectedPrinter => _selectedPrinter;
 
@@ -80,7 +80,7 @@ class PrinterBluetoothManager {
 
   Future<PosPrintResult> writeBytes(
     List<int> bytes, {
-    Duration timeout = const Duration(seconds: 5),
+    Duration timeout,
   }) async {
     final Completer<PosPrintResult> completer = Completer();
 
@@ -88,44 +88,58 @@ class PrinterBluetoothManager {
       return Future<PosPrintResult>.value(PosPrintResult.printerNotSelected);
     } else if (_isDiscovering.value) {
       return Future<PosPrintResult>.value(PosPrintResult.discoveryInProgress);
-    } else if (_isPrinting) {
-      return Future<PosPrintResult>.value(PosPrintResult.printInProgress);
+    } else if (_isSendingData) {
+      return Future<PosPrintResult>.value(PosPrintResult.sendingData);
     }
 
-    _isPrinting = true;
+    _isSendingData = true;
 
     // Connect
     // try {
     final BluetoothConnection connection =
         await BluetoothConnection.toAddress(_selectedPrinter.address);
 
-    connection.input.listen((Uint8List data) {
-      print('Data incoming: ${ascii.decode(data)}');
+    // connection.input.listen((Uint8List data) {
+    //   print('Data incoming: ${ascii.decode(data)}');
 
-      if (ascii.decode(data).contains('!')) {
-        connection.finish(); // Closing connection
-        print('Disconnecting by local host');
-      }
-    }).onDone(() {
-      print('Disconnected by remote request');
-    });
-    connection.output.add(Uint8List.fromList(bytes));
+    //   if (ascii.decode(data).contains('!')) {
+    //     _isSendingData = false;
+    //     connection.finish(); // Closing connection
+    //     print('Disconnecting by local host');
+    //   }
+    // }).onDone(() {
+    //   _isSendingData = false;
+    //   connection.finish();
+    //   print('Disconnected by remote request');
+    // });
 
-    // Printing timeout
-    Future.delayed(timeout, () {
-      if (_isPrinting) {
-        _isPrinting = false;
-        completer.complete(PosPrintResult.timeout);
-      }
-    });
+    try {
+      connection.output.add(Uint8List.fromList(bytes));
+      final Future allsent = timeout != null
+          ? connection.output.allSent.timeout(
+              timeout,
+              onTimeout: () {
+                if (_isSendingData && timeout != null) {
+                  _isSendingData = false;
+                  completer.complete(PosPrintResult.timeout);
+                }
+              },
+            )
+          : connection.output.allSent;
+      await allsent;
+    } catch (e) {
+      rethrow;
+    } finally {
+      await connection.finish();
+    }
 
     return completer.future;
   }
 
-  Future<PosPrintResult> printTicket(Ticket ticket) async {
+  Future<PosPrintResult> printTicket(Ticket ticket, {Duration timeout}) async {
     if (ticket == null || ticket.bytes.isEmpty) {
       return Future<PosPrintResult>.value(PosPrintResult.ticketEmpty);
     }
-    return writeBytes(ticket.bytes);
+    return writeBytes(ticket.bytes, timeout: timeout);
   }
 }
