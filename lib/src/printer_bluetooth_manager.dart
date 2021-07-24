@@ -130,6 +130,7 @@ class PrinterBluetoothManager {
     } catch (e) {
       rethrow;
     } finally {
+      _isSendingData = false;
       await connection.finish();
     }
 
