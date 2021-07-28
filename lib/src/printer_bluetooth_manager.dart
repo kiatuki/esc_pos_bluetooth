@@ -115,23 +115,33 @@ class PrinterBluetoothManager {
 
     try {
       connection.output.add(Uint8List.fromList(bytes));
-      final Future allsent = timeout != null
-          ? connection.output.allSent.timeout(
-              timeout,
-              onTimeout: () {
-                if (_isSendingData && timeout != null) {
-                  _isSendingData = false;
-                  completer.complete(PosPrintResult.timeout);
-                }
-              },
-            )
-          : connection.output.allSent;
-      await allsent;
+      if (timeout != null)
+        connection.output.allSent.then((_) {
+          _isSendingData = false;
+          connection.finish();
+          completer.complete(PosPrintResult.success);
+          return _;
+        }).timeout(
+          timeout,
+          onTimeout: () {
+            if (_isSendingData) {
+              _isSendingData = false;
+              connection.finish();
+              completer.complete(PosPrintResult.timeout);
+            }
+          },
+        );
+      else
+        connection.output.allSent.then((_) {
+          _isSendingData = false;
+          connection.finish();
+          completer.complete(PosPrintResult.success);
+          return _;
+        });
     } catch (e) {
-      rethrow;
-    } finally {
       _isSendingData = false;
-      await connection.finish();
+      connection.finish();
+      rethrow;
     }
 
     return completer.future;
