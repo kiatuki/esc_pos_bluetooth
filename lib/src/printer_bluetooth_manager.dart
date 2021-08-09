@@ -66,7 +66,7 @@ class PrinterBluetoothManager {
         });
       }
     } else {
-      _isDiscovering.add(true);
+      _isDiscovering.add(false);
     }
   }
 
