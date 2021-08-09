@@ -47,21 +47,26 @@ class PrinterBluetoothManager {
     _discoverResults.add([]);
 
     _isDiscovering.add(true);
-    _discoveringSubscription =
-        _bluetoothManager.startDiscovery().listen((event) {
-      if (!_results.contains(event.device)) {
-        _results.add(event.device);
-      }
-      _discoverResults.add(_results.map((_) => _).toList());
-    })
-          ..onDone(() {
-            _isDiscovering.add(false);
-          });
+    final _bluetoothState = await FlutterBluetoothSerial.instance.state;
+    if (_bluetoothState == BluetoothState.STATE_ON) {
+      _discoveringSubscription =
+          _bluetoothManager.startDiscovery().listen((event) {
+        if (!_results.contains(event.device)) {
+          _results.add(event.device);
+        }
+        _discoverResults.add(_results.map((_) => _).toList());
+      })
+            ..onDone(() {
+              _isDiscovering.add(false);
+            });
 
-    if (timeout != null) {
-      Future.delayed(timeout, () {
-        stopDiscovery();
-      });
+      if (timeout != null) {
+        Future.delayed(timeout, () {
+          stopDiscovery();
+        });
+      }
+    } else {
+      _isDiscovering.add(true);
     }
   }
 
@@ -71,7 +76,12 @@ class PrinterBluetoothManager {
   }
 
   Future<List<BluetoothDevice>> getPairedDevices() async {
-    return await _bluetoothManager.getBondedDevices();
+    final _bluetoothState = await FlutterBluetoothSerial.instance.state;
+    if (_bluetoothState == BluetoothState.STATE_ON) {
+      return await _bluetoothManager.getBondedDevices();
+    } else {
+      return [];
+    }
   }
 
   void selectPrinter(BluetoothDevice printer) {
